@@ -3,6 +3,8 @@ from rest_framework.validators import UniqueValidator
 from django.contrib.auth.models import User
 from django.utils import timezone
 from .models import Task, Project
+from django.db import transaction
+
 
 # --- USER SERIALIZER ---
 class UserSerializer(serializers.ModelSerializer):
@@ -25,6 +27,7 @@ class UserSerializer(serializers.ModelSerializer):
             password=validated_data['password']
         )
 
+
 # --- TASK SERIALIZER ---
 class TaskSerializer(serializers.ModelSerializer):
     project_name = serializers.ReadOnlyField(source='project.name')
@@ -40,7 +43,6 @@ class TaskSerializer(serializers.ModelSerializer):
         Security Check: Ensure user owns the project they are assigning a task to.
         """
         user = self.context['request'].user
-        # Allow admins to assign to any project
         if user.is_staff or user.is_superuser:
             return project
             
@@ -53,18 +55,13 @@ class TaskSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Deadline cannot be in the past.")
         return value
 
+
 # --- PROJECT SERIALIZER ---
 class ProjectSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source='owner.username')
-    # Using 'required=False' allows creating a project without tasks
     tasks = TaskSerializer(many=True, required=False, read_only=True)
 
     class Meta:
         model = Project
         fields = ['project_id', 'name', 'owner', 'tasks']
         read_only_fields = ['project_id']
-
-    def update(self, instance, validated_data):
-        # We generally don't update tasks via the Project endpoint (better to use Task endpoint),
-        # so we just update the project fields here.
-        return super().update(instance, validated_data)

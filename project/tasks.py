@@ -5,22 +5,23 @@ from datetime import timedelta
 from django.conf import settings
 from .models import Task
 
+
 @shared_task
-def send_welcome_email_task(email, username):
+def send_email_task(subject,message,recipient_list):
     """
-    Sends a welcome email to new users.
+    Sends a email to users.
     """
-    subject = 'Welcome to Task Manager!'
-    message = f'Hi {username}, thanks for registering on our platform.'
-    
-    send_mail(
-        subject,
-        message,
-        settings.DEFAULT_FROM_EMAIL,
-        [email],
-        fail_silently=False,
-    )
-    return f"Welcome email sent to {email}"
+    try:
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=recipient_list,
+            fail_silently=False
+        )
+        return f"Welcome email sent to {recipient_list}"
+    except Exception as e:
+        return f"failed to send email: {str(e)}"
 
 
 @shared_task(name="check_deadlines_and_notify")
@@ -31,19 +32,19 @@ def check_deadlines_and_notify():
     now = timezone.now()
     next_24_hours = now + timedelta(hours=24)
 
-    # 1. Query: Find tasks due soon that are not completed
-    # Note: We use 'created_by' because that is the field in your Task model.
+    # Find tasks due soon that are not completed
     tasks_due_soon = Task.objects.filter(
         deadline__gt=now,                 # Strictly in the future
         deadline__lte=next_24_hours,      # Within 24 hours
         status__in=['PENDING', 'ONGOING'] # Not completed
-    ).select_related('created_by', 'project') # Optimization to fetch user/project in one query
+    ).select_related('created_by', 'project') #Perform Join Task,Users,Project & get all records
 
     emails_sent = 0
 
     for task in tasks_due_soon:
-        user = task.created_by  # <--- FIXED: Changed from assigned_to to created_by
+        user = task.created_by  
         
+        #if no email,continue
         if not user.email:
             continue 
 
@@ -52,18 +53,16 @@ def check_deadlines_and_notify():
             f"Hi {user.username},\n\n"
             f"This is a reminder that the task '{task.title}' in project '{task.project.name}' "
             f"is due on {task.deadline.strftime('%Y-%m-%d %H:%M')}.\n\n"
-            f"Current Status: {task.get_status_display()}\n"
+            f"Current Status: {task.status}\n"
             f"Please update it soon!"
         )
 
         try:
             print(f"📧 Sending reminder for {task.title} to {user.email}...")
-            send_mail(
+            send_email_task.delay(
                 subject,
                 message,
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-                fail_silently=False,
+                [user.email]
             )
             emails_sent += 1
         except Exception as e:
