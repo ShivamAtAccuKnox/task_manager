@@ -1,4 +1,3 @@
-```markdown
 # Task Manager
 
 A robust Task Management application built with Django, utilizing Celery for asynchronous background processing. The entire stack is containerized using Docker and Docker Compose for easy deployment and development.
@@ -136,5 +135,3 @@ git add --renormalize .
 
 **2. Database connection failed**
 Ensure the `postgres` container is "healthy". It may take a few seconds to initialize on the first run. The `web` container is configured to wait for it.
-
-```
