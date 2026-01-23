@@ -66,6 +66,15 @@ class TaskViewSet(viewsets.ModelViewSet):
             return Task.objects.all()
         
         return Task.objects.filter(project__owner=user)
+    
+    def get_serializer_context(self):
+        """
+        Extra context provided to the serializer class.
+        This allows the serializer to access the request user easily.
+        """
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)

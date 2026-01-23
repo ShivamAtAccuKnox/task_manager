@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from project.models import Task,Project
 from .tasks import send_email_task
-from django.core import cache
+from django.core.cache import cache
 
 
 @receiver(post_save, sender=User)

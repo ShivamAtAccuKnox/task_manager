@@ -64,6 +64,11 @@ TEMPLATES = [
     },
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://seamier-hyperreactive-susann.ngrok-free.dev',
+    'http://localhost:8000',
+]
+ALLOWED_HOSTS = ['*']
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
