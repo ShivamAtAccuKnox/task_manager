@@ -1,0 +1,17 @@
+Django
+djangorestframework
+django-cors-headers
+djangorestframework_simplejwt
+django-filter
+drf-spectacular
+django-redis
+django-silk
+psycopg2-binary
+celery
+redis
+Pillow 
+python-dotenv
+django-celery-results
+django-celery-beat
+requests
+faker

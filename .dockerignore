@@ -1,0 +1,33 @@
+# --- Version Control ---
+.git
+.gitignore
+
+# --- Secrets ---
+# CRITICAL: Never bake secrets into the image
+.env
+
+# --- Docker ---
+# The image doesn't need to contain the instructions to build itself
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# --- Local Generated Files ---
+# Do not copy the local scheduler state to the container
+celerybeat-schedule
+
+# --- Python Junk ---
+__pycache__
+*.pyc
+*.pyo
+venv
+.venv
+env
+
+# --- Testing/Scratch ---
+project.http
+file.txt
+
+# --- Data ---
+# We mount this volume at runtime; don't copy local data into the image layer
+data
