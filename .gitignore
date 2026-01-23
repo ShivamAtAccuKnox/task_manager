@@ -1,6 +1,5 @@
 # --- Secrets & Environment ---
 .env
-# Keep example.env so others know what variables are needed
 !example.env
 
 # --- Python & Django ---
@@ -12,7 +11,6 @@ venv/
 env/
 
 # --- Celery ---
-# You have this in your root; it changes constantly and breaks builds if committed
 celerybeat-schedule
 
 # --- IDE & Editors ---
@@ -22,14 +20,9 @@ celerybeat-schedule
 *.swo
 
 # --- Specific Project Files ---
-# 'project.http' often contains test tokens/cookies. 
-# Best to ignore unless it's a shared template.
 project.http
-
-# Scratch files
 file.txt
 
 # --- Data ---
-# Assuming 'data/' is for local storage/mounts, ignore its contents
 data/*
 !data/.gitkeep
