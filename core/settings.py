@@ -197,6 +197,7 @@ DEFAULT_FROM_EMAIL = 'noreply@taskmanager.com'
 # EMAIL_HOST_USER = ''
 # EMAIL_HOST_PASSWORD = ''
 
+
 #Cache
 
 CACHES = {

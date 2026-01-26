@@ -20,7 +20,7 @@ from project.views import RegisterView
 
 urlpatterns = [
     # 1. Admin
-    path("api/auth/",include('rest_framework.urls')),
+    #path("api/auth/",include('rest_framework.urls')),
     path('admin/', admin.site.urls),
     path('api/silk/', include('silk.urls', namespace='silk')),
 

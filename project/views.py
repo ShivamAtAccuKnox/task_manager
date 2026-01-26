@@ -9,6 +9,8 @@ from .models import Task, Project
 from .serializers import TaskSerializer, ProjectSerializer, UserSerializer
 from .permissions import IsOwnerOrAdmin
 
+# Filters
+from .filters import TaskFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 
@@ -22,12 +24,10 @@ class RegisterView(generics.CreateAPIView):
 class ProjectViewSet(viewsets.ModelViewSet):
     serializer_class = ProjectSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrAdmin]
-    filter_backends = [DjangoFilterBackend,filters.SearchFilter,filters.OrderingFilter]
+    filter_backends = [filters.SearchFilter]
     search_fields = ['name']
-    ordering = ['project_id']
-   
-
-    @method_decorator(cache_page(60 * 15,key_prefix="project_list"))
+    
+    @method_decorator(cache_page(60 * 15, key_prefix="project_list"))
     @method_decorator(vary_on_headers("Authorization"))
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
@@ -47,14 +47,16 @@ class ProjectViewSet(viewsets.ModelViewSet):
 class TaskViewSet(viewsets.ModelViewSet):
     serializer_class = TaskSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrAdmin]
-    filter_backends = [DjangoFilterBackend,filters.SearchFilter,filters.OrderingFilter]
+    
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    
+    filterset_class = TaskFilter
+    
     search_fields = ['title', 'description']
     ordering_fields = ['deadline']
-    filterset_fields = ['status']
     ordering = ['created_at']
 
-
-    @method_decorator(cache_page(60 * 15,key_prefix='task_list'))
+    @method_decorator(cache_page(60 * 15, key_prefix='task_list'))
     @method_decorator(vary_on_headers("Authorization"))
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
@@ -68,10 +70,6 @@ class TaskViewSet(viewsets.ModelViewSet):
         return Task.objects.filter(project__owner=user)
     
     def get_serializer_context(self):
-        """
-        Extra context provided to the serializer class.
-        This allows the serializer to access the request user easily.
-        """
         context = super().get_serializer_context()
         context.update({"request": self.request})
         return context

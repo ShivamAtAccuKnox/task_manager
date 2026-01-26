@@ -59,9 +59,9 @@ class TaskSerializer(serializers.ModelSerializer):
 # --- PROJECT SERIALIZER ---
 class ProjectSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source='owner.username')
-    tasks = TaskSerializer(many=True, required=False, read_only=True)
+    #tasks = TaskSerializer(many=True, required=False, read_only=True)
 
     class Meta:
         model = Project
-        fields = ['project_id', 'name', 'owner', 'tasks']
+        fields = ['project_id', 'name', 'owner']
         read_only_fields = ['project_id']
