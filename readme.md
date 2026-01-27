@@ -60,7 +60,7 @@ Once the containers are running, open a **new terminal** window and run these co
 # 1. Apply database migrations
 docker compose exec web python manage.py migrate
 
-# 2. Populate the database with sample users/tasks (using your custom command)
+# 2. Populate the database with sample users/tasks 
 docker compose exec web python manage.py seed_data
 
 # 3. (Optional) Create a specific admin user if needed
