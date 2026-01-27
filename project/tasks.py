@@ -6,7 +6,7 @@ from django.conf import settings
 from .models import Task
 
 
-@shared_task
+@shared_task(name="send_email_task")
 def send_email_task(subject,message,recipient_list):
     """
     Sends a email to users.
@@ -19,7 +19,7 @@ def send_email_task(subject,message,recipient_list):
             recipient_list=recipient_list,
             fail_silently=False
         )
-        return f"Welcome email sent to {recipient_list}"
+        return f"Email sent to {recipient_list}"
     except Exception as e:
         return f"failed to send email: {str(e)}"
 

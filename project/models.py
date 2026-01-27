@@ -4,6 +4,12 @@ import uuid
 
 # Create your models here.
 
+
+# class organistion(models.Model)
+#     org = 
+#     project = 
+
+
 class Project(models.Model):
     project_id = models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
     name = models.CharField(max_length=50)
