@@ -60,7 +60,8 @@ services:
     env_file: .env
     environment:
       - CELERY_BROKER_URL=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672//
-      - CELERY_RESULT_BACKEND=django-db
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+      - CELERY_CACHE_BACKEND=${CELERY_CACHE_BACKEND}
       - POSTGRES_NAME=${POSTGRES_DB:-app_db}
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}

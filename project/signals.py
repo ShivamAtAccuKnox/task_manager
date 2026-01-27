@@ -10,9 +10,12 @@ from django.core.cache import cache
 @receiver(post_save, sender=User)
 def trigger_welcome_email(sender, instance, created, **kwargs):
     if created and instance.email:
-        subject = "Welcome to Task Manager!"
-        message = f"Hi {instance.username}, thanks for joining our platform!"
-        send_email_task.delay(subject, message, [instance.email])
+        try:
+            subject = "Welcome to Task Manager!"
+            message = f"Hi {instance.username}, thanks for joining our platform!"
+            send_email_task.delay(subject, message, [instance.email])
+        except Exception as e:
+            print(f"Celery task failed: {e}")
 
 
 # --- TASK STATUS CHANGE TRACKING ---

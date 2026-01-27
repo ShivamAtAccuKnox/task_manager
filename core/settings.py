@@ -174,11 +174,20 @@ SILKY_AUTHORISATION = True
 #celery - config
 CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL')
 CELERY_RESULT_BACKEND = 'django-db'
+CELERY_CACHE_BACKEND = 'default'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_RESULT_EXTENDED = True
+CELERY_RESULT_BACKEND = 'db+postgresql://{}:{}@{}:{}/{}'.format(
+    os.environ.get('POSTGRES_USER', 'postgres'),
+    os.environ.get('POSTGRES_PASSWORD', 'postgres'),
+    os.environ.get('POSTGRES_HOST', 'postgres'),
+    os.environ.get('POSTGRES_PORT', '5432'),
+    os.environ.get('POSTGRES_NAME', 'app_db')  
+)
+CELERY_CACHE_BACKEND = 'django-cache'
 
 CELERY_BEAT_SCHEDULE = {
     'notify-deadlines-every-hour': {
