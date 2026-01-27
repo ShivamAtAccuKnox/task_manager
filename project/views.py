@@ -1,12 +1,16 @@
+from rest_framework.views import APIView
 from django.contrib.auth.models import User
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django.views.decorators.vary import vary_on_headers
 
 from rest_framework import viewsets, permissions, generics
+from rest_framework.response import Response
 
 from .models import Task, Project
-from .serializers import TaskSerializer, ProjectSerializer, UserSerializer
+from .serializers import (
+    TaskSerializer, ProjectSerializer, UserSerializer,ProjectDetailSerializer,DashboardStatsSerializer,UserProfileSerializer
+    )
 from .permissions import IsOwnerOrAdmin
 
 # Filters
@@ -14,11 +18,37 @@ from .filters import TaskFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 
+from rest_framework.decorators import action
+
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [permissions.AllowAny] 
+
+
+class UserProfileView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        """
+        GET /api/auth/me/
+        Returns the profile of the currently logged-in user.
+        """
+        serializer = UserProfileSerializer(request.user)
+        return Response(serializer.data)
+    
+    def patch(self, request):
+        """
+        PATCH /api/auth/me/
+        Allows user to update their own username/email.
+        """
+        user = request.user
+        serializer = UserProfileSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
@@ -42,6 +72,15 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+    
+    def get_serializer_class(self):
+        """
+        Return detailed serializer for 'retrieve' (GET ID),
+        and standard serializer for 'list' (GET ALL).
+        """
+        if self.action == 'retrieve':
+            return ProjectDetailSerializer
+        return ProjectSerializer
 
 
 class TaskViewSet(viewsets.ModelViewSet):
@@ -76,3 +115,14 @@ class TaskViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
+    
+    @action(detail=False, methods=['get'])
+    def dashboard(self, request):
+        """
+        GET /api/tasks/dashboard/
+        Returns aggregated statistics for the current user.
+        """
+        serializer = DashboardStatsSerializer(instance=request.user)
+        return Response(serializer.data)
+    
+

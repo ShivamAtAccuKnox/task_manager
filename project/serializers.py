@@ -3,7 +3,6 @@ from rest_framework.validators import UniqueValidator
 from django.contrib.auth.models import User
 from django.utils import timezone
 from .models import Task, Project
-from django.db import transaction
 
 
 # --- USER SERIALIZER ---
@@ -26,7 +25,58 @@ class UserSerializer(serializers.ModelSerializer):
             email=validated_data['email'],
             password=validated_data['password']
         )
+    
 
+class UserProfileSerializer(serializers.ModelSerializer):
+    date_joined = serializers.DateTimeField(format="%Y-%m-%d")
+    active_tasks_count = serializers.SerializerMethodField()
+    projects_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'date_joined', 'active_tasks_count', 'projects_count']
+        read_only_fields = ['date_joined']
+
+    def get_active_tasks_count(self, user):
+        return Task.objects.filter(
+            project__owner=user, 
+            status__in=[Task.Status.PENDING, Task.Status.ONGOING]
+        ).count()
+
+    def get_projects_count(self, user):
+        return Project.objects.filter(owner=user).count()
+    
+
+class DashboardStatsSerializer(serializers.Serializer):
+    """
+    serializer that accepts a User instance as input 
+    and returns calculated dashboard data.
+    """
+    total_projects = serializers.SerializerMethodField()
+    total_tasks = serializers.SerializerMethodField()
+    tasks_by_status = serializers.SerializerMethodField()
+    overdue_tasks = serializers.SerializerMethodField()
+
+
+    def get_total_projects(self, user):
+        return Project.objects.filter(owner=user).count()
+
+    def get_total_tasks(self, user):
+        return Task.objects.filter(project__owner=user).count()
+
+    def get_tasks_by_status(self, user):
+        return {
+            "pending": Task.objects.filter(project__owner=user, status=Task.Status.PENDING).count(),
+            "ongoing": Task.objects.filter(project__owner=user, status=Task.Status.ONGOING).count(),
+            "completed": Task.objects.filter(project__owner=user, status=Task.Status.COMPLETED).count(),
+        }
+
+    def get_overdue_tasks(self, user):
+        return Task.objects.filter(
+            project__owner=user,
+            deadline__lt=timezone.now(),
+            status__in=[Task.Status.PENDING, Task.Status.ONGOING]
+        ).count()
 
 # --- TASK SERIALIZER ---
 class TaskSerializer(serializers.ModelSerializer):
@@ -42,7 +92,7 @@ class TaskSerializer(serializers.ModelSerializer):
         """
         Security Check: Ensure user owns the project they are assigning a task to.
         """
-        user = self.context['request'].user
+        user = self.context['request'].user # equivalent self.request.user
         if user.is_staff or user.is_superuser:
             return project
             
@@ -64,4 +114,13 @@ class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = ['project_id', 'name', 'owner']
+        read_only_fields = ['project_id']
+
+class ProjectDetailSerializer(serializers.ModelSerializer):
+    owner = serializers.ReadOnlyField(source='owner.username')
+    tasks = TaskSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Project
+        fields = ['project_id', 'name', 'owner','tasks']
         read_only_fields = ['project_id']

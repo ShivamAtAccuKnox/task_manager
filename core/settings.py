@@ -22,7 +22,7 @@ INSTALLED_APPS = [
     'corsheaders',               
     
     'rest_framework',
-    'rest_framework_simplejwt',  
+    'rest_framework_simplejwt',
     'drf_spectacular',          
     'silk',   
     'django_celery_beat',                   
@@ -64,10 +64,12 @@ TEMPLATES = [
     },
 ]
 
+
 CSRF_TRUSTED_ORIGINS = [
     'https://seamier-hyperreactive-susann.ngrok-free.dev',
     'http://localhost:8000',
 ]
+
 ALLOWED_HOSTS = ['*']
 
 WSGI_APPLICATION = 'core.wsgi.application'
@@ -130,7 +132,15 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 5
+    'PAGE_SIZE': 5,
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '10/day', 
+        'user': '100/day'
+    }
 }
 
 #jwt
