@@ -2,7 +2,7 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.models import User
 from django.utils import timezone
-from .models import Task, Project
+from .models import Task, Project,ProjectMember
 
 
 # --- USER SERIALIZER ---
@@ -78,42 +78,65 @@ class DashboardStatsSerializer(serializers.Serializer):
             status__in=[Task.Status.PENDING, Task.Status.ONGOING]
         ).count()
 
+
 # --- TASK SERIALIZER ---
 class TaskSerializer(serializers.ModelSerializer):
     project_name = serializers.ReadOnlyField(source='project.name')
     created_by_username = serializers.ReadOnlyField(source='created_by.username')
+    assigned_to_username = serializers.ReadOnlyField(source='assigned_to.username')
 
     class Meta:
         model = Task
-        fields = ['task_id', 'title', 'description', 'status', 'deadline', 'project', 'project_name', 'created_by_username']
-        read_only_fields = ['task_id', 'created_by_username']
+        fields = (
+            'task_id', 
+            'title', 
+            'description', 
+            'status', 
+            'deadline', 
+            'project', 
+            'project_name',
+            'assigned_to',
+            'created_by_username',
+            'assigned_to_username'
+        )
+        read_only_fields = ('task_id', 'created_by_username','assigned_to_username') 
 
-    def validate_project(self, project):
-        """
-        Security Check: Ensure user owns the project they are assigning a task to.
-        """
-        user = self.context['request'].user # equivalent self.request.user
-        if user.is_staff or user.is_superuser:
-            return project
-            
-        if project.owner != user:
-            raise serializers.ValidationError("You cannot add tasks to a project you do not own.")
-        return project
+    def create(self, validated_data):
+        created_by = self.context['request'].user
+        validated_data['created_by'] = created_by
+
+        if not validated_data.get('assigned_to'):
+            validated_data['assigned_to'] = created_by
+        return super().create(validated_data)
 
     def validate_deadline(self, value):
         if value < timezone.now():
             raise serializers.ValidationError("Deadline cannot be in the past.")
         return value
+    
+    def validate(self, data):
+        """
+        Check if the assignee is actually allowed to be on this project.
+        """
+        assignee = data.get('assigned_to')
+        project = data.get('project')
+        
+        if assignee and project:
+            is_member = ProjectMember.objects.filter(project=project, user=assignee).exists()
+            is_owner = project.owner == assignee
+            if not (is_member or is_owner):
+                raise serializers.ValidationError("Assigned user must be a member of the project.")
+        return data
 
 
 # --- PROJECT SERIALIZER ---
+
 class ProjectSerializer(serializers.ModelSerializer):
-    owner = serializers.ReadOnlyField(source='owner.username')
-    #tasks = TaskSerializer(many=True, required=False, read_only=True)
+    owner_name = serializers.ReadOnlyField(source='owner.username')
 
     class Meta:
         model = Project
-        fields = ['project_id', 'name', 'owner']
+        fields = ['project_id', 'name', 'owner_name']
         read_only_fields = ['project_id']
 
 class ProjectDetailSerializer(serializers.ModelSerializer):
@@ -124,3 +147,12 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
         model = Project
         fields = ['project_id', 'name', 'owner','tasks']
         read_only_fields = ['project_id']
+
+
+class ProjectMemberSerializer(serializers.ModelSerializer):
+    username = serializers.ReadOnlyField(source='user.username')
+    email = serializers.ReadOnlyField(source='user.email')
+    
+    class Meta:
+        model = ProjectMember
+        fields = ['id', 'project', 'user', 'username', 'email']

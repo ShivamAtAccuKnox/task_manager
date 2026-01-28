@@ -9,5 +9,5 @@ router.register(r'tasks', TaskViewSet, basename='task')
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('auth/me/', UserProfileView.as_view(), name='user_profile')
+    path('auth/me/', UserProfileView.as_view(), name='user_profile'),
 ]
